@@ -20,8 +20,8 @@ app.get('/', (req, res) => {
 
 // GET METHOD : retrieve all of the data from the table :
 
-app.get('/api/student', (req, res) => {
-  connection.query("SELECT * from student", (err, results) => {
+app.get('/students', (req, res) => {
+  connection.query("SELECT * FROM student", (err, results) => {
     if(err){
       res.status(500).send("Error retriving data")
     } else {
@@ -32,8 +32,8 @@ app.get('/api/student', (req, res) => {
 
 // GET METHOD : Retrieve specific field => id :
 
-app.get('/api/student/:id', (req, res) => {
-  connection.query("SELECT * from student WHERE id= ?", [req.params.id], (err, results) => {
+app.get('/student/:id', (req, res) => {
+  connection.query("SELECT * FROM student WHERE id= ?", [req.params.id], (err, results) => {
     if(err){
       res.status(500).send("Error retriving data")
     } else {
@@ -44,12 +44,12 @@ app.get('/api/student/:id', (req, res) => {
 
 // GET METHOD : Retrieve a data set with a filter "contain" :
 
-app.get('/api/search/', (req, res) => {
-  connection.query("SELECT * from student WHERE age = ?", [req.query.age], (err, results) => {
+app.get('/students/search', (req, res) => {
+  connection.query("SELECT * FROM student WHERE age <= ?", [req.query.age], (err, results) => {
     if (err) {
       res.status(500).send("Error retrieving data");
     } else {
-      const matchingStudent = results.filter((student) => student.age == req.query.age)
+      const matchingStudent = results.filter((student) => student.age <= req.query.age)
       if (matchingStudent.length > 0) {
         res.status(200).json(matchingStudent);
       } else {
@@ -61,42 +61,35 @@ app.get('/api/search/', (req, res) => {
 
 // GET METHOD : Retrieve a data set with a filter "start with" :
 
-app.get('/api/search/', (req, res) => {
-  connection.query("SELECT * from student WHERE firstname LIKE '%?' ", [req.query.name], (err, results) => {
+app.get('/students/firstname/j', (req, res) => {
+  connection.query("SELECT * FROM student WHERE firstname LIKE 'J%' ", 
+  [req.params.firstname], 
+  (err, results) => {
     if (err) {
       res.status(500).send("Error retrieving data");
     } else {
-      const matchingStudent = results.filter((student) => student.firstname == req.query.name)
-      if (matchingStudent.length > 0) {
-        res.status(200).json(matchingStudent);
-      } else {
-        res.status(404).send(`No student found with firstname starting with ${req.params.firstname}`);
+        res.status(200).json(results);
       }
     }
-  })
+  )
 });
 
 // GET METHOD : Retrieve a data set with a filter "greater than" :
 
-app.get('/api/search/', (req, res) => {
-  connection.query("SELECT * from student WHERE date_of_birth <= ?", [req.query.birth], (err, results) => {
+app.get('/dateofbirth', (req, res) => {
+  connection.query("SELECT * from student WHERE date_of_birth <= '2010-01-01'", [req.params.birth], (err, results) => {
     if (err) {
       res.status(500).send("Error retrieving data");
     } else {
-      const matchingStudent = results.filter((student) => student.date_of_birth <= req.query.birth)
-      if (matchingStudent.length > 0) {
-        res.status(200).json(matchingStudent);
-      } else {
-        res.status(404).send('No student was born after this date');
-      }
+        res.status(200).json(results);
     }
   })
 });
 
-// GET METHOD : retrieve all of the data from the table :
+// GET METHOD : retrieve all of the data order by asc :
 
-app.get('/api/student', (req, res) => {
-  connection.query("SELECT * from student", (err, results) => {
+app.get('/students/ascending', (req, res) => {
+  connection.query("SELECT * FROM student ORDER BY firstname ASC", (err, results) => {
     if(err){
       res.status(500).send("Error retriving data")
     } else {
@@ -107,7 +100,7 @@ app.get('/api/student', (req, res) => {
 
 // POST - Insertion of a new entity
 
-app.post("/api/student", (req, res) => {
+app.post("/newstudent", (req, res) => {
   const { firstname, lastname, age, date_of_birth, bilingual } = req.body;
   connection.query(
     "INSERT INTO student(firstname, lastname, age, date_of_birth, bilingual) VALUES(?, ?, ?, ?, ?)",
@@ -125,12 +118,12 @@ app.post("/api/student", (req, res) => {
 
 // PUT - Modification of an entity
 
-app.put("/api/student/:id", (req, res) => {
-  const idStudent = req.params.id;
-  const newStudent = req.body;
+app.put("/student/:id", (req, res) => {
+  const studentId = req.params.id;
+  const newDataStudent = req.body;
   connection.query(
     "UPDATE student SET ? WHERE id = ?",
-    [newStudent, idStudent],
+    [newDataStudent, studentId],
     (err, results) => {
       if (err) {
         console.log(err);
@@ -144,12 +137,11 @@ app.put("/api/student/:id", (req, res) => {
 
 // PUT - Toggle a Boolean value
 
-app.put("/api/student/:id", (req, res) => {
-  const idStudent = req.params.id;
-  const newStudentStatus = req.body.bilingual;
+app.put("/student/:id/bilingual", (req, res) => {
+  const studentId = req.params.id;
   connection.query(
-    "UPDATE student SET bilingual = NOT bilingual WHERE id = ?",
-    [newStudentStatus, idStudent],
+    "UPDATE student SET bilingual = !bilingual WHERE id = ?",
+    [studentId],
     (err, results) => {
       if (err) {
         console.log(err);
@@ -163,11 +155,11 @@ app.put("/api/student/:id", (req, res) => {
 
 // DELETE - Delete an entity
 
-app.delete("/api/student/:id", (req, res) => {
-  const idStudent = req.params.id;
+app.delete("student/:id", (req, res) => {
+  const studentId = req.params.id;
   connection.query(
     "DELETE FROM student WHERE id = ?",
-    [idStudent],
+    [studentId],
     (err, results) => {
       if (err) {
         console.log(err);
@@ -181,7 +173,7 @@ app.delete("/api/student/:id", (req, res) => {
 
 // DELETE - Delete all entities where boolean value is false
 
-app.delete("/api/student/", (req, res) => {
+app.delete("/students/not_bilingual", (req, res) => {
   connection.query(
     "DELETE FROM student WHERE bilingual = 0", (err, results) => {
       if (err) {
